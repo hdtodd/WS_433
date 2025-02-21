@@ -11,3 +11,4 @@ AllowShortCaseLabelsOnASingleLine: true
 IndentCaseLabels: false
 ColumnLimit: 0
 SortIncludes: false
+

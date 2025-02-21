@@ -1,5 +1,5 @@
 /* -*- mode: c++ ; indent-tabs-mode: nil; tab-width: 4; c-basic-offset: 4; -*-
-    WS_433 v1.0
+   WS_433 v1.0
 */
 
 /** @file

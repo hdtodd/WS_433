@@ -1,4 +1,4 @@
-// Definitions used by the Arduino Uno Weather_Probe WS_433.ino
+// Definitions used by the Arduino Uno Weather Sensor,  WS_433.ino
 //
 #define Vers "WS_433 v1.0"    // <Code-version> 
 
