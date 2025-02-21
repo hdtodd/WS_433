@@ -13,9 +13,8 @@
    (at your option) any later version.
 */
 
-*/
-   
-
+/*
+  
    MPL3115A2 and Chronodot communications handled by the I2C library of Wayne
    Truchsess to avoid the lost bits and unsynchronized byte frames that were
    common when using the Wire library, apparently caused by the "repeat-start"
@@ -70,8 +69,7 @@ see
 
 
    Author:
-     H. D Todd, Colchester CT
-     hdtodd@gmail.com
+     David Todd, hdtodd@gmail.com
      2025.02
 */
 
