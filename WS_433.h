@@ -31,18 +31,6 @@ uint8_t sampleRate=S_128;     // Sample 128 times for each MPL3115A2 reading
 #define MY_CALIB_CORR 3.5*100 // millibars-> Pascals, calibrated for my MPL: replace with yours
 #define FT_PER_METER 3.28084  // conversion
 
-uint32_t readwrite8(uint8_t cmd, uint8_t bits, uint8_t dummy);
-
-struct fieldDesc {
-  const char *fieldName; const char *fieldAttributes; };
-struct fieldDesc fieldList[] = {
-  {"date_time", "TEXT PRIMARY KEY"},
-  {"mpl_press", "INT"},
-  {"mpl_temp",  "REAL"},
-  {"dht22_temp","REAL"},
-  {"dht22_rh",  "INT"},
-  NULL,        NULL };
-
 struct mplReadings {
   float alt;
   float press;
