@@ -1,8 +1,8 @@
 /* -*- mode: c++ ; indent-tabs-mode: nil; tab-width: 4; c-basic-offset: 4; -*- */
 
 /** @file
-   WS_433 remote weather sensor
-
+   WS_433 remote weather sensor, v0.1
+   
    Copyright (C) 2025 H. David Todd <hdtodd@gmail.com>
 
    This program is free software; you can redistribute it and/or modify
