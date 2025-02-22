@@ -687,6 +687,8 @@ void loop(void)
     delay(LOOPTIME);
 }; // end loop()
 
+//  Function to read all sensors that are present and
+//  to return the results in rec
 void readSensors(struct recordValues *rec)
 {
     uint8_t data[9];
@@ -739,7 +741,6 @@ void readSensors(struct recordValues *rec)
     };
     digitalWrite(LED, LOW);
 }; // end readSensors
-
 
 //  Function to read supply voltage Vcc (in mV) of Arduino
 //  Adapted to also work with new UNO R4
