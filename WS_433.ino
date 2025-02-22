@@ -207,8 +207,8 @@
 #define DBG_println(...)
 #endif
 
-#define LOOPTIME 5*1000
-//#define LOOPTIME 30*1000
+//#define LOOPTIME 5*1000
+#define LOOPTIME 30*1000
 
 #define TX      3      // Use pin 4 to control transmitter
 #define LED    13      // LED active on GPIO 13 when transmitting
@@ -469,6 +469,7 @@ int dsCount;                  // Count the number of DS18B20 probes
 uint8_t dsResMode = 1;        // use 10-bit for DS1820B precision
 void readSensors(struct recordValues *rec);
 void reportOut(struct recordValues *rec);
+float readVcc(void);
 struct recordValues rec;
 
 // -----------------------------------------------------------------
@@ -487,24 +488,28 @@ void setup(void)
     baro        = MPL3115A2();  // create barometer
     haveMPL3115 = baro.begin(); // is MPL3115 device there?
     if (haveMPL3115) {          // yes, set parameters
-        DBG_println(F("Have mpl"));
+        DBG_println(F("[%WS] MPL3115 is connected"));
         baro.setOversampleRate(sampleRate);
         baro.setAltitude(MY_ALTITUDE); // Set with known altitude
     }
     else {
-        DBG_println(F("[%WP] MPL3115A2 is NOT connected!"));
+        DBG_println(F("[%WS] MPL3115A2 is NOT connected!"));
     };
 
     myDHT22.begin();            // Create temp/humidity sensor
     delay(2000);                // Specs require at least at 2 sec
                                 // delay before first reading
     haveDHT22 = myDHT22.read(); // see if it's there/operating
-    if (!haveDHT22)
-        Serial.println(F("[%WP] DHT22 is NOT connected!"));
+    if (haveDHT22) {
+      DBG_println(F("[%WS] DHT22 is connected"));
+    }
+    else {
+      DBG_println(F("[%WS] DHT22 is NOT connected!"));
+    };
 
     haveDS18 = ds18.begin();
     if (!haveDS18) {
-        Serial.println(F("[%WP] DS18 probes NOT connected!"));
+        DBG_println(F("[%WS] DS18 probes NOT connected!"));
     }
     else {
         ds18.reset();
@@ -537,16 +542,25 @@ void setup(void)
         // Make sure we have at least SOME DS18 devices and not too many
 
         if (dsCount <= 0) {
-            Serial.println(F("[%WP] No valid DS18-class devices found!"));
+            DBG_println(F("[%WS] No valid DS18-class devices found!"));
             haveDS18 = false;
         };
         if (dsCount >= DSMAX) {
-            Serial.println(
-                    F("[%WP] Number of OneWire devices exceeds internal storage limit"));
-            Serial.print(F("             Only "));
-            Serial.print(--dsCount);
-            Serial.print(F(" DS18 devices will be sampled."));
+            DBG_println(
+                    F("[%WS] Number of OneWire devices exceeds internal storage limit"));
+            DBG_print(F("             Only "));
+            DBG_print(--dsCount);
+            DBG_print(F(" DS18 devices will be sampled."));
         };
+        DBG_print(F("[%WS] DS18 probes connected: "));
+        DBG_print(dsCount);
+        readSensors(&rec);
+        DBG_print(F("\tLabeled:"));
+        for (uint8_t dev=0; dev<dsCount; dev++) {
+          DBG_print(' ');
+          DBG_print(rec.ds18.label[dev]);
+        };
+        DBG_println();
 
         // set the precisions for DS18 probe samplings
         for (int dev = 0; dev < dsCount; dev++) {
@@ -560,7 +574,7 @@ void setup(void)
         delay(dsResetTime);  // must wait at least 250 msec for reset search
     }; // end else (!haveDS)
 
-    //* And finally, announce ourselves
+    // And finally, announce ourselves
     DBG_println(F("WS_433 Arduino-Based Weather Sensor startup complete"));
 } // end setup()
 
@@ -573,14 +587,34 @@ void loop(void)
     int16_t itemp, otemp;
     uint16_t press;
     float itempf, otempf, ihumf, ohumf, pressf, voltsf;
-    //    reportOut(&rec);
+    static char disp[12];
 
-    if (first) {
-        DBG_println(F("\nStarting WS_433 transmission"));
-    };
-
+    // Read all the available sensors into "rec"
     readSensors(&rec);
-    DBG_println(F("finished reading sensors"));
+
+    DBG_println(F("\n-------------------------------"));
+    DBG_println(F("Report of readings from sensors:"));
+    DBG_print(F("DHT22:  \tTemp=")); 
+    DBG_print((int) rec.dht.tempf);
+    DBG_print(F(", RH="));
+    DBG_print((int) (rec.dht.rh));
+    DBG_println(F("%"));
+    DBG_print(F("MPL3115:\tTemp="));
+    DBG_print((int) rec.mpl.tempf);
+    DBG_print(F(", Alt="));
+    DBG_print((int) rec.mpl.alt);
+    DBG_print(F("m, Baro="));
+    DBG_print((long) rec.mpl.press);
+    DBG_println(F("Pa"));
+    DBG_print(F("DS18B20:\tTemp "));
+    for (uint8_t dev=0; dev<dsCount; dev++) {
+        DBG_print(rec.ds18.label[dev]);
+        DBG_print(": ");
+        DBG_print((int) rec.ds18.tempf[dev]);
+        DBG_print("    ");
+    };
+    DBG_println();
+
     // Pack readings for ISM transmission
     fmt   = 1;
     for (uint8_t dev = 0; dev < dsCount; dev++) {
@@ -591,23 +625,10 @@ void loop(void)
             && (rec.ds18.label[dev][1] == 'U') )
             otemp = (uint16_t)( ( rec.ds18.tempf[dev] + 0.05 ) * 10 );
     };
-    ihum  = (uint16_t)((rec.dht.rh + 0.5) * 10.0); // round
+    ihum  = (uint16_t)(rec.dht.rh + 0.5); // round
     ohum  = 99;
-    press = (uint16_t)(rec.mpl.press / 10.0);         // hPa * 10
-    volts = 245;
-    //            (uint8_t)(100.0 * (((float)analogRead(VSYSPin)) / RES * 3.0 * 3.3 - 3.0) +
-    //                   0.5);}
-    /*        // Use testing values
-    fmt   = 1;
-    itemp = (int16_t)((21.5 + 0.05) * 10.0);
-    otemp = (int16_t)((-15.0 + 0.05) * 10.0);
-    ihum  = 23;
-    ohum  = 87;
-    press = (uint16_t)(101020.0 / 10.0);         // hPa * 10
-    voc   = 0;
-    volts = 
-            (uint8_t)(100.0 * (4.95 - 3.0) +  0.5);
-    */    
+    press = (uint16_t)( (rec.mpl.press +5.0) / 10.0);         // hPa * 10
+    volts = (uint8_t) ( ((readVcc()-3.00) + .005) * 100.0 );
 
     // Pack the message, create the waveform, and transmit
     om.pack_msg(fmt, id, itemp, otemp, ihum, ohum, press, volts, msg);
@@ -618,7 +639,7 @@ void loop(void)
     digitalWrite(TX, LOW);
 
     // Write back on serial monitor the readings we're transmitting
-    // Validates pack/unpack formatting and reconciliation on rtl_433
+    // Validates pack/unpack formatting for reconciliation on rtl_433
     om.unpack_msg(msg, fmt, id, itemp, otemp, ihum, ohum, press, volts);
     itempf = ((float)itemp) / 10.0;
     otempf = ((float)otemp) / 10.0;
@@ -647,6 +668,7 @@ void loop(void)
     DBG_print(voltsf);
     DBG_print(F("volts"));
     DBG_print(F("\tin hex: 0x "));
+
     for (uint8_t j = 0; j < 10; j++) {
         if (msg[j] < 16)
             DBG_print('0');
@@ -660,7 +682,7 @@ void loop(void)
     for (uint8_t i = 0; i < omniLen; i++)
         DBG_print(((msg[i / 8] >> (7 - (i % 8))) & 0x01));
     DBG_println();
-
+              
     first = false;
     delay(LOOPTIME);
 }; // end loop()
@@ -671,16 +693,17 @@ void readSensors(struct recordValues *rec)
 
     digitalWrite(LED, HIGH); // visual sign that we're sampling
 
-    // if we have DS18s, start reading temps now, in parallel
+    // If we have DS18s, start reading temps now, in parallel
+    // with sampling from other sensors
     if (haveDS18)
         ds18.readAllTemps();
 
     if (haveMPL3115) {
-        // v5.3: adjust pressure for calibration and altitude
+        // Adjust pressure for calibration and altitude
         rec->mpl.press = baro.readPressure() + MY_ELEV_CORR +
                          MY_CALIB_CORR; // Get MPL3115A2 data
         rec->mpl.alt   = baro.readAltitude();
-        rec->mpl.tempf = baro.readTempF();
+        rec->mpl.tempf = baro.readTemp();
     }
     else {
         rec->mpl.press = 0.0;
@@ -689,9 +712,9 @@ void readSensors(struct recordValues *rec)
     };
 
     if (haveDHT22) {
-        rec->dht.tempf =
-                myDHT22.readTemperature(true); // Get DHT22 data with temp in Fahrenheit
-        rec->dht.rh = myDHT22.readHumidity();
+        // Get DHT22 data with temp in Centigrade
+        rec->dht.tempf = myDHT22.readTemperature(false); 
+        rec->dht.rh    = myDHT22.readHumidity();
     }
     else {
         rec->dht.tempf = 0.0;
@@ -703,7 +726,7 @@ void readSensors(struct recordValues *rec)
         ds18.waitForTemps(convDelay[(int)dsResMode]);
         for (int dev = 0; dev < dsCount; dev++) {
             rec->ds18.tempf[dev] =
-                    CtoF(ds18.getTemperature(dsList[dev].addr, data, false));
+                    ds18.getTemperature(dsList[dev].addr, data, false);
             rec->ds18.label[dev][0] = data[2];
             rec->ds18.label[dev][1] = data[3];
             rec->ds18.label[dev][2] = 0x00;
@@ -717,45 +740,64 @@ void readSensors(struct recordValues *rec)
     digitalWrite(LED, LOW);
 }; // end readSensors
 
-/*
-  void reportOut(struct recordValues *rec)
+
+//  Function to read supply voltage Vcc (in mV) of Arduino
+//  Adapted to also work with new UNO R4
+//  Calibrate internal 1V1 ref value with
+//     https://github.com/felias-fogg/intrefTune/blob/master/intrefTune.ino
+float readVcc()
 {
+    long result;
 
-    DBG_print("\',");
-    DBG_print(rec->mpl.press, 0);
-    DBG_print(",");
-    DBG_print(rec->mpl.tempf, 1);
-    DBG_print(",");
-    DBG_print(rec->dht.tempf, 1);
-    DBG_print(",");
-    DBG_print(rec->dht.rh, 0);
-    for (int dev = 0; dev < dsCount; dev++) {
-        DBG_print(",\'");
-        DBG_print(rec->ds18.label[dev]);
-        DBG_print("\',");
-        DBG_print(rec->ds18.tempf[dev], 1);
-    };
-    // If not DSMAX devices, output dummy
-    for (int dev = dsCount; dev < DSMAX; dev++) {
-        DBG_print(",");
-        DBG_print("\'**\',00.0");
-    };
-    DBG_println(")");
+    // setting correct bits in ADMUX register to read internal 1.1 V ref
+    // against AVcc (based on which AVR chip, e.g.
+    //     Uno R3: REFS1 = 0, REFS0 = 1, MUX3:0 = 1110),
+    // or directly read Vcc if newer Uno R4 (RA4M1 chip)
+#if defined(ARDUINO_ARCH_AVR)  // for AVR boards (such as Arduino Uno R3)
+   // if e.g. (very) old Arduino, or Nano, or Uno R3 is used
+#if defined(__AVR_ATmega168__) || defined(__AVR_ATmega328__) || defined(__AVR_ATmega328P__)  
+   static const float  intVREFbin = 1.1;
+   ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+   // if e.g. Arduino Leonardo, or Mega is used
+#elif defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__) 
+   ADMUX = _BV(REFS0) | _BV(MUX4) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
+   // if using different kinds of ATtiny
+#elif defined(__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__) 
+   ADMUX = _BV(MUX5) | _BV(MUX0);
+   // if using different kinds of ATtiny
+#elif defined(__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__) 
+   ADMUX = _BV(MUX3) | _BV(MUX2);
+   // return result Vcc of 0 if chip is not supported by this function
+#else
+   Serial.println("readVcc doesn't support this chip");
+   return 0.0;
+#endif  
 
-    for (int dev = 0; dev < dsCount; dev++) {
-        DBG_println(F("<DS18>"));
-        DBG_print(F("<ds18_lbl>"));
-        DBG_print(rec->ds18.label[dev]);
-        DBG_println(F("</ds18_lbl>"));
-        DBG_print(F("<ds18_temp t_scale=\"F\">"));
-        DBG_print(rec->ds18.tempf[dev], 1);
-        DBG_println(F("</ds18_temp>"));
-        DBG_println(F("</DS18>"));
-    };
-    // If not DSMAX devices, output dummy
-    for (int dev = dsCount; dev < DSMAX; dev++) {
-        DBG_println(F("<DS18>\n<ds18_lbl>**</ds18_lbl>\n<ds18_temp "
-                         "t_scale=\"F\">00.0</ds18_temp>\n</DS18>"));
-    };
-}; // end void reportOut()
-*/
+   delay(2);                           // Wait 2 ms for Vref to settle after ADMUX write
+   ADCSRA |= _BV(ADSC);                // Write ADSC bit to 1 into
+                                       // "ADC Control and Status Register A" to
+                                       // start single ADC conversion
+
+    while (bit_is_set(ADCSRA, ADSC));  // when ADC conversion is over,
+                                       // ADSC bit will go back to 0 
+    // ADC generates 10-bit result (containing measurement of 1.1V int. ref.)
+    // in ADC data registers: ADCH (high) and ADCL (low)
+    // Read ADCL first (important!), then ADCH
+    // (to ensure registers hold data of same conversion);
+    // 8-place bit shift to left: obtain full-precision 10 bit result
+    result = ADCL;
+    result |= ADCH << 8;                
+    // Calculate & return Vcc (in V); intVREFbin = ~1100 mV
+    // (measured vref / (1024/5 v) measured VREF volts) * (5v VCC volts /1.1v VREF volts)
+    return  (float) result / 1024.0 * 5.0 * 5.0 / 1.1;;                      
+  
+#elif defined(ARDUINO_ARCH_RENESAS)     // for RA4M1 boards (such as Arduino Uno R4)
+    // analogReference() reads Vcc, based on internal reference,
+    // and returns value as a float
+    // Result is corrected for incorrect internal reference (fixed factor)
+    // Reading (Vcc in V) is returned as a result of readVccUnoR4 function
+    return ( (float) analogReference() * intVREF);
+#else
+    return 0.0;                         // return result Vcc of 0 if chip is not supported by this function
+#endif
+}
