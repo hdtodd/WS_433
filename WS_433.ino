@@ -480,13 +480,16 @@ void setup(void)
     DBG_println(F("WS_433 starting"));
     I2c.begin();                      // join i2c bus
     I2c.setSpeed(1);                  // go fast
+    DBG_println(F("I2C started"));
     // Force transmit pin and LED pin low as initial conditions
     pinMode(TX, OUTPUT);
     pinMode(LED, OUTPUT);
     digitalWrite(TX, LOW);
     digitalWrite(LED, LOW);
     baro        = MPL3115A2();  // create barometer
+    DBG_println(F("Created baro"));
     haveMPL3115 = baro.begin(); // is MPL3115 device there?
+    DBG_println(F("finished baro.begin"));
     if (haveMPL3115) {          // yes, set parameters
         DBG_println(F("[%WS] MPL3115 is connected"));
         baro.setOversampleRate(sampleRate);
