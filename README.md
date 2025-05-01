@@ -4,7 +4,7 @@
 
 WDL_433 monitors an rtl_433 server feed for weather-related JSON packets published via MQTT and	records	specific fields	from those JSON packets into an SQL database table.  WWW_433 is a set of Apache2 server tools that can be used to display selected data from that sqlite3 or MariaDB/MySQL SQL database table in graphical form via a web browser. Those are the two components of WS_433. WS_433 is a revision of the earlier Arduno-based [WeatherStation](http://github.com/hdtodd/WeatherStation) system.  This revised version collects weather data from an ISM-band rtl_433 server rather than from a directly-attached Arduino Uno.  
 
-<img width="836" alt="WS_433" src="https://github.com/user-attachments/assets/73fa6959-111b-47f5-9e36-dcb5d1a1264c" />
+<img width="836" alt="WS_433" src="https://github.com/user-attachments/assets/85252aaf-878e-4b0e-b426-b29cc3131578" />
 
 
 This version of WDL_433, as distributed in this repository, archives to an SQL database the following data as received by the rtl_433 server:
