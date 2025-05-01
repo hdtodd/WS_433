@@ -1,0 +1,27 @@
+#/etc/systemd/system/WDL_433.service:
+# modeled after https://github.com/merbanan/rtl_433/issues/1651
+[Unit]
+Description=WDL_433 service script
+StartLimitIntervalSec=5
+Documentation=https://github.com/hdtodd/WS_433/WDL_433/README.md
+After=syslog.target network.target
+
+[Service]
+Type=exec
+ExecStart=$(BIN)/WDL_433
+
+# Restart script if stopped
+Restart=always
+# Wait 30s before restart
+RestartSec=30s
+
+# Tag things in the log
+# View with: sudo journalctl -f -u WDL_433 -o cat
+SyslogIdentifier=WDL_433
+
+StandardOutput=syslog
+StandardError=syslog
+
+[Install]
+WantedBy=multi-user.target
+

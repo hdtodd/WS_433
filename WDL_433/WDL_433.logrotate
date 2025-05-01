@@ -1,0 +1,17 @@
+/var/databases/WeatherData.db {
+monthly
+missingok
+rotate 12
+create
+compress
+dateext
+notifempty
+prerotate
+	/bin/systemctl stop WDL_433
+endscript
+
+postrotate
+	/bin/systemctl start WDL_433
+endscript
+
+}
