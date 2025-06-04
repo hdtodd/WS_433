@@ -73,7 +73,7 @@ const struct json_attr_t json_rtl[] = {
   {"temperature_2_C", t_real,   .addr.real   = &DBRow.temp2},
   {"humidity",        t_real,   .addr.real   = &DBRow.rh   },
   {"pressure_hPa",    t_real,   .addr.real   = &DBRow.press},
-  {"Light %",         t_real,   .addr.real   = &DBRow.light},
+  {"light_pct",       t_real,   .addr.real   = &DBRow.light},
   {"",                t_ignore},
   {NULL}
 };
