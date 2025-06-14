@@ -49,13 +49,10 @@ foreach ($db->query($query) as $row) {
 $temp_data=json_encode($chart_array);
 ?>
 
-<!-- Here's the HTML code for the site, followed by the JS component for the chart -->
+<!-- Here's the HTML code for the site, followed by the JS component for the chart
+     Use Google Charts javascript to generate the graphs
+-->
 <html>
-//    --------------------------------------------------------
-//    Output:
-//       Generated HTML for title, form data, javascript for chart from
-//       Google Charts
-
 <center style="font-family:Arial">
 <h1 style="font-family:Arial">The <?php echo gethostname() ?> Meterological Data Web Site</h1>
 <h2 style="font-family:Arial">Current conditions at <?php echo $last_time ?> for sensor '<?php echo $SENSOR ?>'</br> 
