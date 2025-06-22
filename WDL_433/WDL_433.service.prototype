@@ -4,7 +4,7 @@
 Description=WDL_433 service script
 StartLimitIntervalSec=5
 Documentation=https://github.com/hdtodd/WS_433/WDL_433/README.md
-After=syslog.target network.target
+After=network.target
 
 [Service]
 Type=exec
@@ -17,10 +17,6 @@ RestartSec=30s
 
 # Tag things in the log
 # View with: sudo journalctl -f -u WDL_433 -o cat
-SyslogIdentifier=WDL_433
-
-StandardOutput=syslog
-StandardError=syslog
 
 [Install]
 WantedBy=multi-user.target
