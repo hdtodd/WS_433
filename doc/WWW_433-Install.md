@@ -37,7 +37,7 @@ sqlite> select * from SensorData;
 8.  Once you've confirmed that the PHP code generates the graphic web page, you're ready to put it into production:
     *  `sudo cd /var/www/html`
     *  Set the distribution home page aside: `sudo mv index.html distribution-index.html`
-    *  Make the PHP code your new home page: `sudo cp WeatherGraph.php index.php` and `sudo mv index.html index.org`.
+    *  Make the PHP code your new home page: `sudo cp WeatherGraph.php index.php`.
 9.  Now connect to that server with a browser and you should see the graphical display of your weather history.
 
 The second PHP program, `TP-merge.php`, demonstrates how readings from two different sensors might be integrated into one graphical web page. Specifically, the repository version of `TP-merge.php` combines the temperature from an outdoor sensor ("Deck"), that does not have a pressure sensor, with the pressure reading from an indoor sensor ("Desk"). It combines those readings in 10-minute "bins", since the two sensors are not synchronized to broadcast readings at the same time.  That code would require similar editing of the sensorIDs and field values for your particular use case.  Because it creates a temporary database table, the ownership of `/var/database/` and `/var/database/Weather.db` must be set to `www-data`, which the `make install` command does for you.  (Modify that ownership if you've change your `apache2` settings.)
