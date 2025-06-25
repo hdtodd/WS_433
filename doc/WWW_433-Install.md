@@ -2,7 +2,7 @@
 
 The WWW_433 files provide web service support for the WS_433 WeatherStation system with PHP and Python code examples for an Apache2 server to create web-page graphical displays using Google Charts.  Because there are so many ways to set up a web site, this guide provides tools and suggestions rather than a quick installation.
 
-So, because casual installation of these files might interfere with an exisiting web site, no installation script is provided.  Rather, two example files are provided for use by those who have web services already in operation and would like to incorporate pages that would display recent historical meteorological data.
+So, because casual installation of these files might interfere with an exisiting web site, the installation script in `Makefile` simply moves the PHP files to the `/var/www/html` directory and creates, if necessary, and sets protections on the database file.  Two example PHP files are provided for use by those who have web services already in operation and would like to incorporate pages that would display recent historical meteorological data.  A Python script is provided as a model for sites that prefer that system.
 
 For those with no web site running, instructions are provided below on how to install the graphical web page as the "home" page on an Apache2 server.
 
@@ -14,9 +14,9 @@ Do not perform this installation on an existing, operational web server.
 
 1.  Install the Apache2 server.  For example, for a Raspberry Pi running Raspbian OS, follow the guide [here](https://www.tomshardware.com/news/raspberry-pi-web-server,40174.html) or [here](https://pimylifeup.com/raspberry-pi-apache/) to create a functioning web server.  Confirm its operation by connecting to that site with a web browser: you should see the standard Debian distribution web page.  Check to verify where that page is located.  Under Raspberry Pi OS, it's located in `/var/wwww/html/` as file `index.html`.  The remaining instructions assume that as the location for the web pages.
 2.  Install the php-sqlite3 module.  For example, `sudo apt-get install php-sqlite3` on Debian Linux.
-3.  From the `WS_433/WWW_433` repository directory, copy the web graphing files to the web directory:
+3.  From the `WS_433/WWW_433` repository directory, copy the web graphing files to the web directory and set the directory and file protections for database access by the PHP scripts:
 ```
-sudo cp WeatherGraph* /var/www/html/
+sudo make install
 ```
 4.  Connect to the Apache2 web directory, `sudo cd /var/www/html` 
 5.  Confirm you have a functioning sqlite3 weather database by issuing the commands:
@@ -40,6 +40,8 @@ sqlite> select * from SensorData;
     *  Make the PHP code your new home page: `sudo cp WeatherGraph.php index.php`
 9.  Now connect to that server with a browser and you should see the graphical display of your weather history.
 
+The second PHP program, `TP-merge.php`, demonstrates how readings from two different sensors might be integrated into one graphical web page. That code would require similar editing of the sensorIDs and field values.  Because it creates a temporary database table, the ownership of `/var/database/` and `/var/database/Weather.db` must be set to `www-data`, which the `make install` command does for you.  (Modify that ownership if you've change your `apache2` settings.)
+
 ## Existing Web Sites
 
 If you already have a functioning web site, you likely want to add the weather graph as a new page rather than use it to replace your existing site.
@@ -50,12 +52,14 @@ Copy the `WS_433/WWW_433/WeatherGraph.*` files to the appropriate directory in y
 
 ## Customizations
 
-The WeatherGraph.* files are simply prototypes for displays that you might want to create.  For example, you might prefer to see displays of `temperature_C` and `pressure_hPa` in your graphs.  If so, you'll need to edit the graphing program files to select other variables for display.  Change the labels on the graphs, too.
+The WeatherGraph.* and TP-merge.php files are simply prototypes for displays that you might want to create.  For example, you might prefer to see displays of `temperature_C` and `pressure_hPa` in your graphs.  If so, you'll need to edit WeatherGraph.php  to select other variables for display (if your sensor reports both temperature and pressure) or edit `TP-merge.php` if you need to merge readings from different sensors.  Change the labels on the graphs, too.
 
 If you're an experienced web programmer, you might want to create multiple `.php` programs for different SensorID's and for different variables, or you might want to select parameters from a list and generate the graphing code dynamically.
 
 ## Author
 
-David Todd, HDTodd@gmail.com, 2025.04.28, but modeled on code provided by others, most notably by Craig Deaton.
+David Todd, HDTodd@gmail.com, 2025.04.28, but modeled on code provided by others, most notably by Craig Deaton.  Updated 2025.06.25 to add TP-merge.php.
+
+
 
 
