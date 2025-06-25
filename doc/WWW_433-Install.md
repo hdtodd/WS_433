@@ -16,7 +16,7 @@ Do not perform this installation on an existing, operational web server.
 2.  Install the php-sqlite3 module.  For example, `sudo apt-get install php-sqlite3` on Debian Linux.
 3.  From the `WS_433/WWW_433` repository directory, copy the web graphing files to the web directory and set the directory and file protections for database access by the PHP scripts:
 ```
-sudo make install
+   sudo make install
 ```
 4.  Connect to the Apache2 web directory, `sudo cd /var/www/html` 
 5.  Confirm you have a functioning sqlite3 weather database by issuing the commands:
