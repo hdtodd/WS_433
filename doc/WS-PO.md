@@ -97,7 +97,7 @@ The MQTT callback procedure:
 
 ###  Debugging
 
-WDL modules have extensive debugging `printf` statements embedded to assist with debugging, and there are two configuration settings that that can be helpful: `-g` or `--Gdebug` enables debugging in the `GetSetParams.c` module that processes the configuration file and command-line options; and `-d` or `--debug` enables debugging in the remainder of the program.  The variables GDEBUG and DEBUG that are set by these options are global variables, with values established in the main `WDL_433.c` module.  They are initially `bool` values of `false`: change them in that module if you want to enable debugging information by default.  They may also be set in the configuration file or by the command-line switch.
+WDL modules have extensive debugging `printf` statements embedded to assist with debugging, and there are two configuration settings that that can be helpful: `-G` or `--Gdebug` enables debugging in the `GetSetParams.c` module that processes the configuration file, command-line options, and sensorID-alias name associations; and `-D` or `--debug` enables debugging in the remainder of the program.  The variables GDEBUG and DEBUG that are set by these options are global variables, with values established in the main `WDL_433.c` module.  They are initially `bool` values of `false`: change them in that module if you want to enable debugging information by default.  They may also be set in the configuration file or by the command-line switch.
 
 ### WDL Databases
 
