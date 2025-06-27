@@ -8,9 +8,10 @@
 #pragma once
 
 #include <time.h>
+#include <linux/limits.h>
 
 #define APP_NAME    "WDL_433"
-#define APP_VERSION "v0.1"
+#define APP_VERSION "v1.0"
 
 // Database and table names used by sqlite3 & MariaDB/MySQL
 #define DBPATH  "/var/databases/"
@@ -32,10 +33,9 @@
 #endif // end ifndef USE_SQLITE3
 
 // File-handling definitions
-#define FNLEN      80
+#define FNLEN      NAME_MAX
 #define INI_PATH   ".:~:/usr/local/etc:/etc"      // search path for .ini & aliases
 #define INI_FILE   APP_NAME".ini"                 // default name of .ini file
-#define ALIAS_FILE APP_NAME"_Sensor_Aliases.ini"  // default name of alias file
 
 typedef enum {HTTP, MQTT} source_t;               // future HTTP streaming option
 
@@ -76,7 +76,6 @@ void tree_print(NPTR p);
 void setDebug(void);
 void setGDebug(void);
 void helper(cmdlist_t *cmdlist);
-void setSenAlias(char *optarg);
 void setSource(char *optarg);
 void setHost(char *optarg);
 void setPort(char *optarg);

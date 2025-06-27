@@ -23,7 +23,6 @@
     Gdebug                x       x
     help                          x
     config                        x
-    aliases               x       x     x
     source                x       x     x    //disabled for now
     host         x        x       x
     port         x        x       x     x
@@ -49,7 +48,6 @@
 static auxdata optdetails[] = {
     //ltr switches                 &setter function      desc  
     {'c', SWCLI,                   NULL,                 "Path/name for configuration file"},
-    {'A', SWINI|SWCLI|SWSET,       (void *)&setSenAlias, "Path/name for sensor alias file"},
 //  {'S', SWINI|SWCLI|SWSET,       (void *)&setSource,   "Source protocol [ MQTT | HTTP ]"},
     {'H', SWRQD|SWINI|SWCLI,       (void *)&setHost,     "Name or IP of MQTT or HTTP host"},
     {'P', SWRQD|SWINI|SWCLI|SWSET, (void *)&setPort,     "Port number of MQTT or HTTP host"},
@@ -62,7 +60,7 @@ static auxdata optdetails[] = {
     {'u', SWRQD|SWINI|SWCLI,       (void *)&setMyUser,   "MySQL username"},
     {'p', SWRQD|SWINI|SWCLI,       (void *)&setMyPass,   "MySQL password"},
 #endif
-    {'d', SWINI|SWCLI,             (void *)&setDebug,    "Print WDL debugging information"},
+    {'D', SWINI|SWCLI,             (void *)&setDebug,    "Print WDL debugging information"},
     {'G', SWINI|SWCLI,             (void *)&setGDebug,   "Print GetSetParams() debugging information"},
     {'h', SWCLI,                   (void *)&helper,      "This help message"},
     {'v', SWCLI,                   NULL,                 "Print program version number"},
@@ -73,19 +71,18 @@ static auxdata optdetails[] = {
 //  'short_opt' is the standard getopt() list of single-letter options
 //  'optaux'    is the auxiliary list above to help with .ini and CLI processing
 //  'long_opt'  is the standard getopt_long() list of verbose CLI options
-//  The inidices for the 'long_opt' 'ltr' value and the 'optaux' 'val' value
+//  The indices for the 'long_opt' 'ltr' value and the 'optaux' 'val' value
 //  must be the same (validated by GetSetParams())
 static cmdlist_t cmdlist = {
 #ifdef USE_SQLITE3
-    .short_opt = "c:A:H:P:T:q:s:dGhv",
+    .short_opt = "c:H:P:T:q:s:DGhv",
 #else
-    .short_opt = "c:A:H:P:T:m:u:p:dGhv",
+    .short_opt = "c:H:P:T:m:u:p:DGhv",
 #endif
     .optaux = optdetails,
     .long_opt = {
 	//name       has_arg            flag  ltr
 	{"config",   required_argument, NULL, 'c'},
-    {"aliases",  required_argument, NULL, 'A'},
 //  {"source",   required_argument, NULL, 'S'},
 	{"host",     required_argument, NULL, 'H'},
 	{"port",     required_argument, NULL, 'P'},
@@ -98,7 +95,7 @@ static cmdlist_t cmdlist = {
     {"myuser",   required_argument, NULL, 'u'},
     {"mypass" ,  required_argument, NULL, 'p'},
 #endif
-    {"debug",    no_argument,       NULL, 'd'},
+    {"debug",    no_argument,       NULL, 'D'},
     {"Gdebug",   no_argument,       NULL, 'G'},
     {"help",     no_argument,       NULL, 'h'},
     {"version",  no_argument,       NULL, 'v'},

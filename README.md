@@ -51,7 +51,7 @@ This system was developed on a Raspberry Pi 4B running Raspberry Pi OS.  WDL_433
 5.  Type `make` to use sqlite3 as your database for archiving data; type `make USE_MYSQL=1` to use MariaDB/MySQL as your archival database.
 6.  Edit the file `WDL_433.ini` to provide the parameters for your installation.  In particular, provide the MySQL hostname, username, and password if you're using MariaDB/MySQL.
 7.  Test the compiled program by giving the command `./WDL_433 -d` (for debugging information).  WDL_433 will create the database and table if necessary.  Correct any directory or login permissions until WDL_433 begins correctly receiving and recording rtl_433 packets.
-8.  If you know the SensorIDs ('model'/'id'/'channel') of your sensors, edit the file `WDL_433_Sensor_Aliases.ini` to associate each of them with an alias name that might be more familiar (e.g., `Acurite-609TXC/46/ = Deck` records readings from that Acurite sensor in the database as having originated from "Deck").
+8.  If you know the SensorIDs ('model'/'id'/'channel') of your sensors, edit the [aliases] section of the file `WDL_433.ini` to associate each of them with an alias name that might be more familiar (e.g., `Acurite-609TXC/46/ = Deck` records readings from that Acurite sensor in the database as having originated from the sensor located on your "Deck").
 9.  By default, the components for WDL_433 are installed under `/usr/local`.  Edit the Makefile to change that if you want to install to another root directory.  Then type `sudo make install` or `sudo make USE_MYSQL=1 install`.  That copies the necessary files to the appropriate places, installs a `.service` file for `systemd`, and enables and starts the service.
 10.  Refer to `./doc/ WWW_433-Install.md` for guidance on testing and installing the graphical web page.
 
@@ -59,6 +59,14 @@ This system was developed on a Raspberry Pi 4B running Raspberry Pi OS.  WDL_433
 
 Refer to the `./doc/` directory for detailed instructions on the installation of the various components.
 
+## Release History
+
+| Version | Date       | Changes |
+|---------|------------|---------|
+| v1.0    | 2025.06.27 | Integrated alias name assignment into .ini file processing |
+| v0.1    | 2025.04.17 | Preliminary but fully-functional version. |
+
 ## Author
 
-Written by David Todd, HDTodd@gmail.com, 2025.04.17 as an integration of the prior [WeatherStation](http://github.com/hdtodd/WeatherStation) repository with [rtl_watch](http://github.com/hdtodd/rtl_watch).
+Written by David Todd, HDTodd@gmail.com as an integration of the prior [WeatherStation](http://github.com/hdtodd/WeatherStation) repository with [rtl_watch](http://github.com/hdtodd/rtl_watch) for use with `rtl_433` sensor data collection.  
+

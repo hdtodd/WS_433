@@ -56,10 +56,10 @@ Once it appears that WDL_433 is functioning correctly, take these steps to verif
 5.  If you can identify the `SensorID` of individual sensors and want to associate them with a familiar name (e.g., one in your office, another on your deck, and another at your neighbor's), note those SensorID's:
     *  in sqlite3, `SELECT DISTINCT SensorID from SensorData;`
     *  in MariaDB/MySQL: `use Weather; SELECT DISTINCT Sensorid from SensorData;`
-    *  edit the file `WDL_433_Sensor_Aliases.ini` to associate your familiar name with the SensorID as rtl_433 receives it.
+    *  edit the `[aliases]` section of the file `WDL_433.ini` to associate your familiar name with the SensorID as rtl_433 receives it.
 6.  When you are ready to put WDL_433 into production operation, type `sudo make install` to:
     *  copy the `WDL_433` program to a systems directory (by default, into `/usr/local/bin`)
-    *  copy files `WDL_433.ini` and `WDL_433_Sensor_Alias.ini` into a systems directory (by default, into `/usr/local/etc`)
+    *  copy `WDL_433.ini` into a systems directory (by default, into `/usr/local/etc`)
     *  copy `WDL_433.service` into `/etc/systemd/system/`), enable it as a system service, and start its operation.
 
 ### Uninstalling
