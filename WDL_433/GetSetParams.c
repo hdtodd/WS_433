@@ -34,6 +34,7 @@
     
     Adapted and integrated from various human and AI sources
     HDTodd@gmail.com, 2025.04.23
+    Updated to process aliases 2025.06.27
 */
 
 #include <stdio.h>
@@ -46,10 +47,14 @@
 #include "GetSetParams.h"
 #include "WDL_433.h"
 
+// Section header for aliases in .ini file
+#define ALIASES "aliases"
+
 // GDEBUG is for debugging this procedure
 // DEBUG is for general debugging outside of this procedure
 extern bool GDEBUG;
 extern bool DEBUG;
+extern NPTR sensors;
 
 /*
     Start by validating that the indices between 'long_opt' and
@@ -60,10 +65,10 @@ extern bool DEBUG;
 */
 void GetSetParams(int argc, char *argv[], cmdlist_t *cmdlist) {
     int cmd_index;
-    bool dfltIni = true;
     int c;
     FILE *cFile;
-    char iniFile[FNLEN+1];
+    bool dfltIni = true;
+    char iniFile[PATH_MAX];
     char dfltname[] = INI_FILE;
     char paths[] = INI_PATH;
     char *path;
@@ -108,7 +113,7 @@ void GetSetParams(int argc, char *argv[], cmdlist_t *cmdlist) {
                 break;
                 
             // set DEBUG?
-            case 'd':
+            case 'D':
                 DEBUG = true;
                 printf("'--debug' enabled from command line\n");
                 break;
@@ -140,33 +145,30 @@ void GetSetParams(int argc, char *argv[], cmdlist_t *cmdlist) {
     // Did the command line provide the name of a .ini file?
     if (!dfltIni) {
         // Yes. Open the .ini file specified with '-c'
+        if (GDEBUG) printf("Processing '-c %s' configuration file option\n", iniFile);
         cFile = fopen(iniFile, "r");
-        if (cFile == NULL)
+        if (cFile == NULL) {
             fprintf(stderr, "?Configuration file '%s' not found\n", iniFile);
-        else
-            if (GDEBUG) printf("Using config file %s\n", iniFile);
+            exit(1);
+        }
     } else {
-        // No '-c' specified; search the INI_FILE paths
-        char *fullpath = (char *)malloc(2*FNLEN * sizeof(char));
+        // No '-c'; search the INI_FILE paths for the default file
         if (GDEBUG)
             printf("Searching these paths for the .ini file: %s\n", INI_PATH);
         path = strtok(paths, ":");
         while (path != NULL) {
-            sprintf(fullpath, "%s/%s", path, dfltname);
-            if (GDEBUG) printf("Try fullpath: %s\n", fullpath);
-            cFile = fopen(fullpath, "r");
-            if (cFile != NULL) {
-                if (GDEBUG) printf("Using config file %s\n", fullpath);
+            sprintf(iniFile, "%s/%s", path, dfltname);
+            if (GDEBUG) printf("Try fullpath: %s\n", iniFile);
+            cFile = fopen(iniFile, "r");
+            if (cFile != NULL)
                 break;
-            };
             path = strtok(NULL, ":");
         };
-        free(fullpath);
     };
 
     // If we opened a .ini file, process it
-    if (GDEBUG) printf("Begin processing configuration ('.ini') file\n");
     if (cFile != NULL) {
+        if (GDEBUG) printf("Processing config file %s\n", iniFile);
         IniData data;
         initIniData(&data);
         if (parseIniFile(cFile, &data)) {
@@ -182,35 +184,60 @@ void GetSetParams(int argc, char *argv[], cmdlist_t *cmdlist) {
         };
 
         // Finally, we have the key:value dictionary of command-line
-        // parameters, so process the ones we're allowed to
+        // parameters and aliases, so process the ones we're allowed to and
+        // record those that are aliases
         for (int i = 0; i < data.count; i++) {
             int cmd;
-            bool foundCmd = false;
-            strLower(data.entries[i].key);
-            // Is this key in the list of commands?
-            for (cmd=0; cmdlist->long_opt[cmd].name!=NULL; cmd++)
-                if (strcmp(cmdlist->long_opt[cmd].name, data.entries[i].key) == 0) {
-                    // got a match
-                    foundCmd = true;
-                    break;
-                };
-            if (foundCmd) {
-                // Found the key in the command table.  Change its value if we can.
-                if ( (cmdlist->optaux[cmd].switches & SWINI) != 0 ) {
-                    // OK, we can change this key.  Ask setter to do it
-                    cmdlist->optaux[cmd].setter(data.entries[i].value);
-                    cmdlist->optaux[cmd].switches |= SWSET;
-                    if (GDEBUG)
-                        printf("\tFrom .ini, setting %s to %s\n",
-                               cmdlist->long_opt[cmd].name, data.entries[i].value);
+            bool foundCmd   = false;
+            bool foundAlias = false;
+
+            // Is this an alias?
+            strLower(data.entries[i].section);
+            foundAlias = (strcmp(data.entries[i].section, ALIASES) == 0) ? true : false;
+            if (foundAlias) {
+                // Yes, record the alias in 'sensors'
+                if (GDEBUG)
+                    printf("\tAlias %s = %s \n", data.entries[i].key, data.entries[i].value);
+                NPTR node;
+                node = node_find(sensors, data.entries[i].key,true);
+                if (sensors == NULL) sensors = node;
+                if (node == NULL) {
+                    fprintf(stderr, "Couldn't record alias for sensorID %s\n",
+                                    data.entries[i].key);
                 } else {
-                   fprintf(stderr, "\nSetting '%s' from .ini file not permitted\n",
-                           data.entries[i].key);
-                }
-            } else {
-                //  Key not found in command table; say so
-                fprintf(stderr, "Unrecognized .ini keyword '%s'\n", data.entries[i].key);
+                    char *newalias = malloc(sizeof(data.entries[i].value));
+                    strcpy(newalias, data.entries[i].value);
+                    node->alias = newalias;
+                };
             };
+            if (!foundAlias) {
+                // Is this key in the list of commands?
+                for (cmd=0; cmdlist->long_opt[cmd].name!=NULL; cmd++) {
+                    strLower(data.entries[i].key);
+                    foundCmd =  (strcmp(cmdlist->long_opt[cmd].name, data.entries[i].key) == 0) ? true : false;
+                    if (foundCmd) break;
+                };
+                if (foundCmd) {
+                    // Found the key in the command table.  Change its value if we can.
+                    if ( (cmdlist->optaux[cmd].switches & SWINI) != 0 ) {
+                        // OK, we can change this key.  Ask setter to do it
+                        cmdlist->optaux[cmd].setter(data.entries[i].value);
+                        cmdlist->optaux[cmd].switches |= SWSET;
+                        if (GDEBUG)
+                            printf("\tFrom .ini, setting %s to %s\n",
+                                   cmdlist->long_opt[cmd].name, data.entries[i].value);
+                    } else 
+                       fprintf(stderr, "\nSetting '%s' from .ini file not permitted\n",
+                                   data.entries[i].key);
+                } else {
+                    //  Not an alias and key not found in command table; say so
+                    fprintf(stderr, "Unrecognized .ini keyword '%s'\n", data.entries[i].key);
+                    };
+            };  // !foundAlias
+        };
+        if (GDEBUG) {
+            printf("Table of sensor aliases created from aliases in the .ini file:\n");
+            tree_print(sensors);
         };
         freeIniData(&data);
         fclose(cFile);

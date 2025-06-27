@@ -61,17 +61,6 @@ void helper(cmdlist_t *cmdlist) {
     exit(0);
 };
 
-void setSenAlias(char *optarg) {
-    char *alias;
-    if ( (alias=malloc(strlen(optarg)) ) == NULL ) {
-        fprintf(stderr, "Unable to allocate memory for option '%s' string\n", optarg);
-        exit(1);
-    };
-    strcpy(alias, optarg);
-    senAlias = alias;
-    return;
-};
-
 void setSource(char *optarg) {
     strLower(optarg);
     if (strcmp(optarg, "mqtt")==0) source = MQTT;
@@ -176,7 +165,6 @@ void PrintParams(cmdlist_t *cmdlist, char *header) {
     printf("\n%s\n", header);
     printf("DEBUG    = %s\n", DEBUG ? "true" : "false");
     printf("GDEBUG   = %s\n", GDEBUG ? "true" : "false");
-    printf("senAlias = %s\n", senAlias);
     printf("source   = %s\n", source ? "MQTT" : "HTTP");
     printf("host     = %s\n", host);
     printf("port     = %d\n", port);
@@ -277,7 +265,7 @@ void tree_print(NPTR p) {
   if (p != NULL) {
     tree_print(p->lptr);
     // Print node information, then attribute information
-    printf("    sensorID %-20s", p->key);
+    printf("\tsensorID %-20s", p->key);
     if (p->alias == NULL)
         printf("\n");
     else
