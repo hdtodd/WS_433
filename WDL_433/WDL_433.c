@@ -23,6 +23,7 @@
 #include <getopt.h>
 #include <mosquitto.h>
 #include <unistd.h>
+#include <errno.h>
 #include <time.h>
 
 #include "WDL_433.h"
@@ -51,6 +52,7 @@ char   *myUser    = "";
 char   *myPass    = "";
 #endif
 
+struct mosquitto *mosq;
 bool run = true;
 char lastSensorID[201] = "";
 time_t timestamp;
@@ -79,10 +81,28 @@ const struct json_attr_t json_rtl[] = {
 
 void handle_signal(int s) {
     run = false;
+    mosquitto_disconnect(mosq);
 }
 
-void connect_callback(struct mosquitto *mosq, void *obj, int result) {
-   if (DEBUG) printf("MQTT connect callback, rc=%d\n", result);
+void connect_callback(struct mosquitto *mosq, void *obj, int connack_code) {
+    if (DEBUG) {
+        printf("MQTT connect callback, result code = %d\n", connack_code);
+        printf("MQTT result msg: %s\n", mosquitto_connack_string(connack_code));
+    };
+    if (connack_code >= 0x80) {
+        fprintf(stderr,"Connection failed!\n");
+        exit(EXIT_FAILURE);
+    }
+    int rc = mosquitto_subscribe(mosq, NULL, topic, 0);
+    if (rc != MOSQ_ERR_SUCCESS) {
+        fprintf(stderr, "?Couldn't subscribe to server '%s', port %d, topic '%s'\n",
+                host, port, topic);
+        fprintf(stderr, "Subscription error %d, \n   %s\n",
+                rc, mosquitto_reason_string(rc));
+        fprintf(stderr, "Verify that the topic and port are correct\n");
+        exit(EXIT_FAILURE);
+    };
+
 };
 
 // This processes the JSON packets as received by the MQTT client procedure
@@ -163,10 +183,9 @@ int main(int argc, char *argv[]) {
 #include "WDL_cmds.c"
     uint8_t reconnect = true;
     char clientid[24];
-    struct mosquitto *mosq;
-    int rc = 0;
-    int errCode = 0;
-
+    enum mosq_err_t rc;
+    const int KEEPALIVE = 60;
+    
     signal(SIGINT, handle_signal);
     signal(SIGTERM, handle_signal);
 
@@ -184,7 +203,7 @@ int main(int argc, char *argv[]) {
         tree_print(sensors);
     };
 
-  // Open MQTT subscription connection
+  // Create the MQTT client
     if (DEBUG) printf("Opening MQTT connection & subscribing\n",
                       "Host: %s, port %d, topic: %s\n",
                       host, port, topic);
@@ -196,26 +215,25 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     };
     
-    // Check for database file or open connection
+    // Check for database file or open MySQL connection
     initDBMgr();
 
-    //  Subscribe to the MQTT feed
+    //  Connect to the MQTT feed and subscribe in connect_callback
     if (DEBUG) printf("Subscribing to MQTT feed\n");
     mosquitto_connect_callback_set(mosq, connect_callback);
     mosquitto_message_callback_set(mosq, message_callback);
-    rc = mosquitto_connect(mosq, host, port, 60);
-    mosquitto_subscribe(mosq, NULL, topic, 0);
+    rc = mosquitto_connect(mosq, host, port, KEEPALIVE);
+    if (rc != MOSQ_ERR_SUCCESS) {
+        fprintf(stderr, "?Couldn't connect to server\n");
+        fprintf(stderr, "Verify that host '%s' is publishing MQTT on port %d,\n",
+                host, port);
+        exit(EXIT_FAILURE);
+    };
 
     // Main loop: run until signaled not to
+    // Enter wait loop with 30-sec timeout
     if (DEBUG) printf("Entering MQTT run loop\n");
-    while (run) {
-        rc = mosquitto_loop(mosq, -1, 1);
-        if (run && rc) {
-        printf("WARN: MQTT connection error!  Retry in 10 sec.\n");
-        sleep(10);
-        mosquitto_reconnect(mosq);
-        };
-    };
+    rc = mosquitto_loop_forever(mosq, 30000, 1);
 
     // Exit here when told to stop; clean up
     mosquitto_destroy(mosq);
