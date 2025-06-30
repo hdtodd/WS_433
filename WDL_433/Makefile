@@ -53,7 +53,6 @@ ifdef USE_MYSQL
 	chown root:root ${ETC}/${PROJ}.ini
 	chmod 700 ${ETC}/${PROJ}.ini
 endif
-	cp ${PROJ}_Sensor_Aliases.ini ${ETC}
 #       Use sed to replace $(BIN) with target binary directory name
 	sed s:$$\(BIN\):${BIN}: ${PROJ}.service.prototype > ${PROJ}.service
 	cp ${PROJ}.service ${SYSSERVICE}
