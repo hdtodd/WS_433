@@ -11,7 +11,7 @@
 #include <linux/limits.h>
 
 #define APP_NAME    "WDL_433"
-#define APP_VERSION "v1.0"
+#define APP_VERSION "v1.1"
 
 // Database and table names used by sqlite3 & MariaDB/MySQL
 #define DBPATH  "/var/databases/"
