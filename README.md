@@ -63,6 +63,7 @@ Refer to the `./doc/` directory for detailed instructions on the installation of
 
 | Version | Date       | Changes |
 |---------|------------|---------|
+| v1.1    | 2025.06.30 | Improve MQTT server connection error reporting; make reconnecting to disconnectd server robust |
 | v1.0    | 2025.06.27 | Integrated alias name assignment into .ini file processing |
 | v0.1    | 2025.04.17 | Preliminary but fully-functional version. |
 
