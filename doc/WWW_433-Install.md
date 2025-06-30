@@ -40,7 +40,10 @@ sqlite> select * from SensorData;
     *  Make the PHP code your new home page: `sudo cp WeatherGraph.php index.php`.
 9.  Now connect to that server with a browser and you should see the graphical display of your weather history.
 
-The second PHP program, `TP-merge.php`, demonstrates how readings from two different sensors might be integrated into one graphical web page. Specifically, the repository version of `TP-merge.php` combines the temperature from an outdoor sensor ("Deck"), that does not have a pressure sensor, with the pressure reading from an indoor sensor ("Desk"). It combines those readings in 10-minute "bins", since the two sensors are not synchronized to broadcast readings at the same time.  That code would require similar editing of the sensorIDs and field values for your particular use case.  Because it creates a temporary database table, the ownership of `/var/database/` and `/var/database/Weather.db` must be set to `www-data`, which the `make install` command does for you.  (Modify that ownership if you've change your `apache2` settings.)
+The second PHP program, `TP-merge.php`, demonstrates how readings from two different sensors might be integrated into one graphical web page. Specifically, the repository version of `TP-merge.php` combines the temperature from an outdoor sensor ("Deck"), that does not have a pressure sensor, with the pressure reading from an indoor sensor ("Desk"). It combines those readings in 10-minute "bins", since the two sensors are not synchronized to broadcast readings at the same time.  That code would require similar editing of the sensorIDs and field values for your particular use case.  Because it creates a temporary database table, the ownership of `/var/database/` and `/var/database/Weather.db` must be set to `www-data`, which the `make install` command does for you.  (Modify that ownership if you've change your `apache2` settings.)  The following is a screenshot of what the web page from TP-Merge looks like (temperature from sensorID "Deck" and pressure from sensorID "Desk").
+
+<img width="1018" alt="TP-Merge Graph" src="https://github.com/user-attachments/assets/7ec3ae71-0f0d-4b15-b719-ba6ad827f9fc" />
+
 
 ## Existing Web Sites
 
