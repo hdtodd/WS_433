@@ -84,28 +84,33 @@ void handle_signal(int s) {
     mosquitto_disconnect(mosq);
 }
 
+// This is called when the MQTT connection to the server has been made or
+//   re-established.  It subscribes or re-subscribes to the topic so that
+//   messages will be received and processed by the message callback routine..
 void connect_callback(struct mosquitto *mosq, void *obj, int connack_code) {
     if (DEBUG) {
         printf("MQTT connect callback, result code = %d\n", connack_code);
         printf("MQTT result msg: %s\n", mosquitto_connack_string(connack_code));
     };
     if (connack_code >= 0x80) {
-        fprintf(stderr,"Connection failed!\n");
+        fprintf(stderr,"MQTT connection failed with error code %d!\n", connack_code);
         exit(EXIT_FAILURE);
     }
     int rc = mosquitto_subscribe(mosq, NULL, topic, 0);
     if (rc != MOSQ_ERR_SUCCESS) {
-        fprintf(stderr, "?Couldn't subscribe to server '%s', port %d, topic '%s'\n",
+        fprintf(stderr, "?Couldn't subscribe to MQTT server '%s', port %d, topic '%s'\n",
                 host, port, topic);
-        fprintf(stderr, "Subscription error %d, \n   %s\n",
+        fprintf(stderr, "Subscription error code %d, \n   %s\n",
                 rc, mosquitto_reason_string(rc));
         fprintf(stderr, "Verify that the topic and port are correct\n");
         exit(EXIT_FAILURE);
     };
-
 };
 
 // This processes the JSON packets as received by the MQTT client procedure
+// Ignores tire pressure messages and messages that don't have temperature
+// readings.  Only records messages from any individual sensor approximately
+// every 5 minutes.
 void message_callback(struct mosquitto *mosq, void *obj,
                       const struct mosquitto_message *message) {
     int jstatus;
@@ -211,7 +216,7 @@ int main(int argc, char *argv[]) {
     snprintf(clientid, sizeof(clientid), "WDL_433_%d", getpid());
     mosq = mosquitto_new(clientid, true, 0);
     if (mosq == NULL) {
-        fprintf(stderr, "?WDL_433 unable to create mosquitto client\n");
+        fprintf(stderr, "?WDL_433: Unable to create mosquitto client\n");
         exit(EXIT_FAILURE);
     };
     
@@ -224,14 +229,15 @@ int main(int argc, char *argv[]) {
     mosquitto_message_callback_set(mosq, message_callback);
     rc = mosquitto_connect(mosq, host, port, KEEPALIVE);
     if (rc != MOSQ_ERR_SUCCESS) {
-        fprintf(stderr, "?Couldn't connect to server\n");
+        fprintf(stderr, "?WDL_433: Couldn't connect to MQTT server\n");
         fprintf(stderr, "Verify that host '%s' is publishing MQTT on port %d,\n",
                 host, port);
         exit(EXIT_FAILURE);
     };
 
-    // Main loop: run until signaled not to
-    // Enter wait loop with 30-sec timeout
+    // Main loop: run until signaled not to by CNTL-C
+    // Enter wait loop with 30-sec timeout for disconnects
+    // loop_forever() handles reconnects if server disconnects
     if (DEBUG) printf("Entering MQTT run loop\n");
     rc = mosquitto_loop_forever(mosq, 30000, 1);
 
